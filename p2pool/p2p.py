@@ -332,6 +332,11 @@ class Protocol(p2protocol.Protocol):
             if share.VERSION >= 13:
                 # send full transaction for every new_transaction_hash that peer does not know
                 for tx_hash in share.share_info['new_transaction_hashes']:
+                    if not tx_hash in known_txs:
+                        newset   = set(share.share_info['new_transaction_hashes'])
+                        ktxset   = set(known_txs)
+                        missing = newset - ktxset
+                        print "Missing %i of %i transactions for broadcast" % (len(missing), len(newset))
                     assert tx_hash in known_txs, 'tried to broadcast share without knowing all its new transactions'
                     if tx_hash not in self.remote_tx_hashes:
                         tx_hashes.add(tx_hash)
@@ -627,7 +632,7 @@ class SingleClientFactory(protocol.ReconnectingClientFactory):
         self.node.lost_conn(proto, reason)
 
 class Node(object):
-    def __init__(self, best_share_hash_func, port, net, addr_store={}, connect_addrs=set(), desired_outgoing_conns=10, max_outgoing_attempts=30, max_incoming_conns=50, preferred_storage=1000, known_txs_var=variable.VariableDict({}), mining_txs_var=variable.VariableDict({}), advertise_ip=True, external_ip=None):
+    def __init__(self, best_share_hash_func, port, net, addr_store={}, connect_addrs=set(), desired_outgoing_conns=10, max_outgoing_attempts=30, max_incoming_conns=50, preferred_storage=1000, known_txs_var=variable.VariableDict({}), mining_txs_var=variable.VariableDict({}), mining2_txs_var=variable.VariableDict({}), advertise_ip=True, external_ip=None):
         self.best_share_hash_func = best_share_hash_func
         self.port = port
         self.net = net
@@ -636,6 +641,7 @@ class Node(object):
         self.preferred_storage = preferred_storage
         self.known_txs_var = known_txs_var
         self.mining_txs_var = mining_txs_var
+        self.mining2_txs_var = mining2_txs_var
         self.advertise_ip = advertise_ip
         self.external_ip = external_ip
         
