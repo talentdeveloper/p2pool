@@ -323,7 +323,7 @@ class BaseShare(object):
         merkle_root = bitcoin_data.check_merkle_link(self.gentx_hash, self.share_info['segwit_data']['txid_merkle_link'] if segwit_activated else self.merkle_link)
         self.header = dict(self.min_header, merkle_root=merkle_root)
         self.pow_hash = net.PARENT.POW_FUNC(bitcoin_data.block_header_type.pack(self.header))
-        self.hash = self.header_hash = bitcoin_data.hash256(bitcoin_data.block_header_type.pack(self.header))
+        self.hash = self.header_hash = bitcoin_data.hash_groestl(bitcoin_data.block_header_type.pack(self.header))
         
         if self.target > net.MAX_TARGET:
             from p2pool import p2p
@@ -366,7 +366,7 @@ class BaseShare(object):
                 raise p2p.PeerMisbehavingError('switch without enough history')
         
         other_tx_hashes = [tracker.items[tracker.get_nth_parent_hash(self.hash, share_count)].share_info['new_transaction_hashes'][tx_count] for share_count, tx_count in self.iter_transaction_hash_refs()]
-        if other_txs is not None and not isinstance(other_txs, dict): other_txs = dict((bitcoin_data.hash256(bitcoin_data.tx_type.pack(tx)), tx) for tx in other_txs)
+        if other_txs is not None and not isinstance(other_txs, dict): other_txs = dict((bitcoin_data.single_hash256(bitcoin_data.tx_type.pack(tx)), tx) for tx in other_txs)
         
         share_info, gentx, other_tx_hashes2, get_share = self.generate_transaction(tracker, self.share_info['share_data'], self.header['bits'].target, self.share_info['timestamp'], self.share_info['bits'].target, self.contents['ref_merkle_link'], [(h, None) for h in other_tx_hashes], self.net,
             known_txs=other_txs, last_txout_nonce=self.contents['last_txout_nonce'], segwit_data=self.share_info.get('segwit_data', None))

@@ -10,7 +10,7 @@ class HeaderWrapper(object):
     
     @classmethod
     def from_header(cls, header):
-        return cls(bitcoin_data.hash256(bitcoin_data.block_header_type.pack(header)), header['previous_block'])
+        return cls(bitcoin_data.hash_groestl(bitcoin_data.block_header_type.pack(header)), header['previous_block'])
     
     def __init__(self, hash, previous_hash):
         self.hash, self.previous_hash = hash, previous_hash

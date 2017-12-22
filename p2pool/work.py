@@ -100,10 +100,10 @@ class WorkerBridge(worker_interface.WorkerBridge):
             bb = self.node.best_block_header.value
             if bb is not None and bb['previous_block'] == t['previous_block'] and self.node.net.PARENT.POW_FUNC(bitcoin_data.block_header_type.pack(bb)) <= t['bits'].target:
                 print 'Skipping from block %x to block %x!' % (bb['previous_block'],
-                    bitcoin_data.hash256(bitcoin_data.block_header_type.pack(bb)))
+                    bitcoin_data.hash_groestl(bitcoin_data.block_header_type.pack(bb)))
                 t = dict(
                     version=bb['version'],
-                    previous_block=bitcoin_data.hash256(bitcoin_data.block_header_type.pack(bb)),
+                    previous_block=bitcoin_data.hash_groestl(bitcoin_data.block_header_type.pack(bb)),
                     bits=bb['bits'], # not always true
                     coinbaseflags='',
                     height=t['height'] + 1,
@@ -259,7 +259,7 @@ class WorkerBridge(worker_interface.WorkerBridge):
             mm_data = ''
             mm_later = []
         
-        tx_hashes = [bitcoin_data.hash256(bitcoin_data.tx_type.pack(tx)) for tx in self.current_work.value['transactions']]
+        tx_hashes = [bitcoin_data.single_hash256(bitcoin_data.tx_type.pack(tx)) for tx in self.current_work.value['transactions']]
         tx_map = dict(zip(tx_hashes, self.current_work.value['transactions']))
         
         previous_share = self.node.tracker.items[self.node.best_share_var.value] if self.node.best_share_var.value is not None else None
@@ -392,7 +392,7 @@ class WorkerBridge(worker_interface.WorkerBridge):
                 new_gentx['flag'] = gentx['flag']
                 new_gentx['witness'] = gentx['witness']
             
-            header_hash = bitcoin_data.hash256(bitcoin_data.block_header_type.pack(header))
+            header_hash = bitcoin_data.hash_groestl(bitcoin_data.block_header_type.pack(header))
             pow_hash = self.node.net.PARENT.POW_FUNC(bitcoin_data.block_header_type.pack(header))
             try:
                 if pow_hash <= header['bits'].target or p2pool.DEBUG:
