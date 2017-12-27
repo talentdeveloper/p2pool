@@ -41,10 +41,10 @@ class Protocol(protocol.Protocol):
             checksum = yield 4
             payload = yield length
             
-            if bitcoin_data.hash_groestl(payload)[:4] != checksum:
+            if bitcoin_data.groestlHash(payload)[:4] != checksum:
                 print 'invalid hash for', self.transport.getPeer().host, repr(command), length, checksum.encode('hex')
                 if p2pool.DEBUG:
-                    print bitcoin_data.hash_groestl(payload)[:4].encode('hex'), payload.encode('hex')
+                    print bitcoin_data.groestlHash(payload)[:4].encode('hex'), payload.encode('hex')
                 self.badPeerHappened()
                 continue
             
@@ -92,7 +92,7 @@ class Protocol(protocol.Protocol):
         payload = type_.pack(payload2)
         if len(payload) > self._max_payload_length:
             raise TooLong('payload too long')
-        data = self._message_prefix + struct.pack('<12sI', command, len(payload)) + bitcoin_data.hash_groestl(payload)[:4] + payload
+        data = self._message_prefix + struct.pack('<12sI', command, len(payload)) + bitcoin_data.groestlHash(payload)[:4] + payload
         self.traffic_happened.happened('p2p/out', len(data))
         self.transport.write(data)
     

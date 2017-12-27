@@ -9,8 +9,12 @@ from p2pool.util import math, pack
 
 import groestlcoin_hash
 
+def groestlHash(data):
+    """Groestl hash returning bytes."""
+    return groestlcoin_hash.getHash(data, len(data))
+
 def hash_groestl(data):
-    return pack.IntType(256).unpack(groestlcoin_hash.getHash(data, len(data)))
+    return pack.IntType(256).unpack(groestlHash(data))
 
 def single_hash256(data):
     return pack.IntType(256).unpack(hashlib.sha256(data).digest())
@@ -24,7 +28,7 @@ def hash160(data):
     return pack.IntType(160).unpack(hashlib.new('ripemd160', hashlib.sha256(data).digest()).digest())
 
 class ChecksummedType(pack.Type):
-    def __init__(self, inner, checksum_func=lambda data: groestlcoin_hash.getHash(data, len(data))[:4]):
+    def __init__(self, inner, checksum_func=lambda data: groestlHash(data)[:4]):
         self.inner = inner
         self.checksum_func = checksum_func
     
