@@ -80,11 +80,11 @@ def main(args, net, datadir_path, merged_urls, worker_endpoint):
         @defer.inlineCallbacks
         def connect_p2p():
             # connect to bitcoind over bitcoin-p2p
-            print '''Testing bitcoind P2P connection to '%s:%s'...''' % (args.bitcoind_address, args.bitcoind_p2p_port)
+            print '''Testing groestlcoind P2P connection to '%s:%s'...''' % (args.bitcoind_address, args.bitcoind_p2p_port)
             factory = bitcoin_p2p.ClientFactory(net.PARENT)
             reactor.connectTCP(args.bitcoind_address, args.bitcoind_p2p_port, factory)
             def long():
-                print '''    ...taking a while. Common reasons for this include all of bitcoind's connection slots being used...'''
+                print '''    ...taking a while. Common reasons for this include all of groestlcoind's connection slots being used...'''
             long_dc = reactor.callLater(5, long)
             yield factory.getProtocol() # waits until handshake is successful
             if not long_dc.called: long_dc.cancel()
@@ -97,7 +97,7 @@ def main(args, net, datadir_path, merged_urls, worker_endpoint):
         
         # connect to bitcoind over JSON-RPC and do initial getmemorypool
         url = '%s://%s:%i/' % ('https' if args.bitcoind_rpc_ssl else 'http', args.bitcoind_address, args.bitcoind_rpc_port)
-        print '''Testing bitcoind RPC connection to '%s' with username '%s'...''' % (url, args.bitcoind_rpc_username)
+        print '''Testing groestlcoind RPC connection to '%s' with username '%s'...''' % (url, args.bitcoind_rpc_username)
         bitcoind = jsonrpc.HTTPProxy(url, dict(Authorization='Basic ' + base64.b64encode(args.bitcoind_rpc_username + ':' + args.bitcoind_rpc_password)), timeout=30)
         yield helper.check(bitcoind, net)
         temp_work = yield helper.getwork(bitcoind)
@@ -132,12 +132,12 @@ def main(args, net, datadir_path, merged_urls, worker_endpoint):
             if address is not None:
                 res = yield deferral.retry('Error validating cached address:', 5)(lambda: bitcoind.rpc_validateaddress(address))()
                 if not res['isvalid'] or not res['ismine']:
-                    print '    Cached address is either invalid or not controlled by local bitcoind!'
+                    print '    Cached address is either invalid or not controlled by local groestlcoind!'
                     address = None
             
             if address is None:
-                print '    Getting payout address from bitcoind...'
-                address = yield deferral.retry('Error getting payout address from bitcoind:', 5)(lambda: bitcoind.rpc_getaccountaddress('p2pool'))()
+                print '    Getting payout address from groestlcoind...'
+                address = yield deferral.retry('Error getting payout address from groestlcoind:', 5)(lambda: bitcoind.rpc_getaccountaddress('p2pool'))()
             
             with open(address_path, 'wb') as f:
                 f.write(address)
@@ -158,7 +158,7 @@ def main(args, net, datadir_path, merged_urls, worker_endpoint):
                 print ' ERROR: Can not use fewer than 2 addresses in dynamic mode. Resetting to 2.'
                 args.numaddresses = 2
             for i in range(args.numaddresses):
-                address = yield deferral.retry('Error getting a dynamic address from bitcoind:', 5)(lambda: bitcoind.rpc_getnewaddress('p2pool'))()
+                address = yield deferral.retry('Error getting a dynamic address from groestlcoind:', 5)(lambda: bitcoind.rpc_getnewaddress('p2pool'))()
                 new_pubkey = bitcoin_data.address_to_pubkey_hash(address, net.PARENT)
                 pubkeys.addkey(new_pubkey)
 
@@ -440,13 +440,13 @@ def run():
         print 'Pausing for 3 seconds...'
         time.sleep(3)
     
-    realnets = dict((name, net) for name, net in networks.nets.iteritems() if '_testnet' not in name)
+    realnets = dict((name, net) for name, net in networks.nets.iteritems() if name == 'groestlcoin')
     
     parser = fixargparse.FixedArgumentParser(description='p2pool (version %s)' % (p2pool.__version__,), fromfile_prefix_chars='@')
     parser.add_argument('--version', action='version', version=p2pool.__version__)
     parser.add_argument('--net',
-        help='use specified network (default: bitcoin)',
-        action='store', choices=sorted(realnets), default='bitcoin', dest='net_name')
+        help='use specified network (default: groestlcoin)',
+        action='store', choices=sorted(realnets), default='groestlcoin', dest='net_name')
     parser.add_argument('--testnet',
         help='''use the network's testnet''',
         action='store_const', const=True, default=False, dest='testnet')
@@ -454,10 +454,10 @@ def run():
         help='enable debugging mode',
         action='store_const', const=True, default=False, dest='debug')
     parser.add_argument('-a', '--address',
-        help='generate payouts to this address (default: <address requested from bitcoind>), or (dynamic)',
+        help='generate payouts to this address (default: <address requested from groestlcoind>), or (dynamic)',
         type=str, action='store', default=None, dest='address')
     parser.add_argument('-i', '--numaddresses',
-        help='number of bitcoin auto-generated addresses to maintain for getwork dynamic address allocation',
+        help='number of groestlcoin auto-generated addresses to maintain for getwork dynamic address allocation',
         type=int, action='store', default=2, dest='numaddresses')
     parser.add_argument('-t', '--timeaddresses',
         help='seconds between acquisition of new address and removal of single old (default: 2 days or 172800s)',
@@ -515,27 +515,27 @@ def run():
         help='listen on PORT on interface with ADDR for RPC connections from miners (default: all interfaces, %s)' % ', '.join('%s:%i' % (name, net.WORKER_PORT) for name, net in sorted(realnets.items())),
         type=str, action='store', default=None, dest='worker_endpoint')
     worker_group.add_argument('-f', '--fee', metavar='FEE_PERCENTAGE',
-        help='''charge workers mining to their own bitcoin address (by setting their miner's username to a bitcoin address) this percentage fee to mine on your p2pool instance. Amount displayed at http://127.0.0.1:WORKER_PORT/fee (default: 0)''',
+        help='''charge workers mining to their own groestlcoin address (by setting their miner's username to a groestlcoin address) this percentage fee to mine on your p2pool instance. Amount displayed at http://127.0.0.1:WORKER_PORT/fee (default: 0)''',
         type=float, action='store', default=0, dest='worker_fee')
     
-    bitcoind_group = parser.add_argument_group('bitcoind interface')
-    bitcoind_group.add_argument('--bitcoind-config-path', metavar='BITCOIND_CONFIG_PATH',
-        help='custom configuration file path (when bitcoind -conf option used)',
+    bitcoind_group = parser.add_argument_group('groestlcoind interface')
+    bitcoind_group.add_argument('--groestlcoind-config-path', metavar='GROESTLCOIND_CONFIG_PATH',
+        help='custom configuration file path (when groestlcoind -conf option used)',
         type=str, action='store', default=None, dest='bitcoind_config_path')
-    bitcoind_group.add_argument('--bitcoind-address', metavar='BITCOIND_ADDRESS',
+    bitcoind_group.add_argument('--groestlcoind-address', metavar='GROESTLCOIND_ADDRESS',
         help='connect to this address (default: 127.0.0.1)',
         type=str, action='store', default='127.0.0.1', dest='bitcoind_address')
-    bitcoind_group.add_argument('--bitcoind-rpc-port', metavar='BITCOIND_RPC_PORT',
-        help='''connect to JSON-RPC interface at this port (default: %s <read from bitcoin.conf if password not provided>)''' % ', '.join('%s:%i' % (name, net.PARENT.RPC_PORT) for name, net in sorted(realnets.items())),
+    bitcoind_group.add_argument('--groestlcoind-rpc-port', metavar='GROESTLCOIND_RPC_PORT',
+        help='''connect to JSON-RPC interface at this port (default: %s <read from groestlcoin.conf if password not provided>)''' % ', '.join('%s:%i' % (name, net.PARENT.RPC_PORT) for name, net in sorted(realnets.items())),
         type=int, action='store', default=None, dest='bitcoind_rpc_port')
-    bitcoind_group.add_argument('--bitcoind-rpc-ssl',
+    bitcoind_group.add_argument('--groestlcoind-rpc-ssl',
         help='connect to JSON-RPC interface using SSL',
         action='store_true', default=False, dest='bitcoind_rpc_ssl')
-    bitcoind_group.add_argument('--bitcoind-p2p-port', metavar='BITCOIND_P2P_PORT',
-        help='''connect to P2P interface at this port (default: %s <read from bitcoin.conf if password not provided>)''' % ', '.join('%s:%i' % (name, net.PARENT.P2P_PORT) for name, net in sorted(realnets.items())),
+    bitcoind_group.add_argument('--groestlcoind-p2p-port', metavar='GROESTLCOIND_P2P_PORT',
+        help='''connect to P2P interface at this port (default: %s <read from groestlcoin.conf if password not provided>)''' % ', '.join('%s:%i' % (name, net.PARENT.P2P_PORT) for name, net in sorted(realnets.items())),
         type=int, action='store', default=None, dest='bitcoind_p2p_port')
-    bitcoind_group.add_argument(metavar='BITCOIND_RPCUSERPASS',
-        help='bitcoind RPC interface username, then password, space-separated (only one being provided will cause the username to default to being empty, and none will cause P2Pool to read them from bitcoin.conf)',
+    bitcoind_group.add_argument(metavar='GROESTLCOIND_RPCUSERPASS',
+        help='groestlcoind RPC interface username, then password, space-separated (only one being provided will cause the username to default to being empty, and none will cause P2Pool to read them from groestlcoin.conf)',
         type=str, action='store', default=[], nargs='*', dest='bitcoind_rpc_userpass')
     
     args = parser.parse_args()
@@ -587,7 +587,7 @@ def run():
         if 'rpcssl' in contents and contents['rpcssl'] != '0':
             args.bitcoind_rpc_ssl = True
         if args.bitcoind_rpc_password is None:
-            parser.error('''Bitcoin configuration file didn't contain an rpcpassword= line! Add one!''')
+            parser.error('''Groestlcoin configuration file didn't contain an rpcpassword= line! Add one!''')
     
     if args.bitcoind_rpc_username is None:
         args.bitcoind_rpc_username = ''
