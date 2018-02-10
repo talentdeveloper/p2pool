@@ -1,7 +1,7 @@
 #include <Python.h>
 
 static const int64_t COIN = 100000000;
-static const int64_t minimumSubsidy = 5.0 * COIN;
+static const int64_t minimumSubsidy = 5 * COIN;
 static const int64_t nGenesisBlockRewardCoin = 1 * COIN;
 static const int64_t nPremine = 240640 * COIN;
 

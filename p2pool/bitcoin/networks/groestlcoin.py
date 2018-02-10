@@ -15,7 +15,7 @@ RPC_CHECK = defer.inlineCallbacks(lambda bitcoind: defer.returnValue(
             (yield helper.check_genesis_block(bitcoind, '00000ac5927c594d49cc0bdb81759d0da8297eb614683d3acb62f0703b639023')) and
             not (yield bitcoind.rpc_getinfo())['testnet']
         ))
-SUBSIDY_FUNC = lambda height: __import__('groestlcoin_subsidy').getBlockBaseValue(nBits, height+1)
+SUBSIDY_FUNC = lambda height: __import__('groestlcoin_subsidy').getBlockBaseValue(0, height+1)
 POW_FUNC = data.hash_groestl
 BLOCK_PERIOD = 60 # s
 SYMBOL = 'GRS'
