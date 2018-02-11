@@ -63,7 +63,7 @@ def is_segwit_activated(version, net):
     segwit_activation_version = getattr(net, 'SEGWIT_ACTIVATION_VERSION', 0)
     return version >= segwit_activation_version and segwit_activation_version > 0
 
-DONATION_SCRIPT = '76a9140d1b3823fd9e54aefec638c91cce4175c515dc2e88ac'.decode('hex')
+DONATION_SCRIPT = '4104c5e6c406b804c7ea1f7c756297ed327dd12f6466b699536bbb85641d9daf9a1222a5a6e18bd203b96132371c7932cb4c999fc7039171a28d76695c5c055f2f33ac'.decode('hex')
 
 class BaseShare(object):
     VERSION = 0
