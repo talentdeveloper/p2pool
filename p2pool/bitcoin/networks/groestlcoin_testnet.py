@@ -24,5 +24,5 @@ BLOCK_EXPLORER_URL_PREFIX = 'http://chainz.cryptoid.info/grs-test/block.dws?'
 ADDRESS_EXPLORER_URL_PREFIX = 'http://chainz.cryptoid.info/grs-test/address.dws?'
 TX_EXPLORER_URL_PREFIX = 'http://chainz.cryptoid.info/grs-test/tx.dws?'
 SANE_TARGET_RANGE = (2**256//2**32//1000 - 1, 2**256//2**20 - 1)
-DUMB_SCRYPT_DIFF = 256
+DUMB_SCRYPT_DIFF = 2**12
 DUST_THRESHOLD = 0.001e8
