@@ -71,7 +71,7 @@ class BaseShare(object):
     SUCCESSOR = None
 
     MAX_BLOCK_WEIGHT = 4000000
-    MAX_NEW_TXS_SIZE = 50000
+    MAX_NEW_TXS_SIZE = 100000
 
     small_block_header_type = pack.ComposedType([
         ('version', pack.VarIntType()),
@@ -433,11 +433,10 @@ class NewShare(BaseShare):
     VERSION = 17
     VOTING_VERSION = 17
     SUCCESSOR = None
-    MAX_NEW_TXS_SIZE = 100000
 
 class Share(BaseShare):
-    VERSION = 16
-    VOTING_VERSION = 16
+    VERSION = 17
+    VOTING_VERSION = 17
     SUCCESSOR = NewShare
 
 
