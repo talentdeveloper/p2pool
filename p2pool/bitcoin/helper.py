@@ -53,7 +53,7 @@ def getwork(bitcoind, use_getblocktemplate=False):
             work = yield go()
             end = time.time()
         except jsonrpc.Error_for_code(-32601): # Method not found
-            print >>sys.stderr, 'Error: Bitcoin version too old! Upgrade to v0.5 or newer!'
+            print >>sys.stderr, 'Error: Groestlcoin version too old! Upgrade to v2.1.0.6 or newer!'
             raise deferral.RetrySilentlyException()
     packed_transactions = [x['data'].decode('hex') for x in work['transactions'] if len(x.get('depends', [])) == 0]
     if 'height' not in work:
