@@ -13,8 +13,8 @@ MIN_TARGET = 0
 MAX_TARGET = 2**256//2**20 - 1
 PERSIST = False
 WORKER_PORT = 11330
-BOOTSTRAP_ADDRS = 'grs.altmine.net'.split(' ')
-ANNOUNCE_CHANNEL = '#p2pool-grs'
+BOOTSTRAP_ADDRS = 'grs-fr.catpool.io grs-nl.catpool.io grs-us.catpool.io broxygrspool.dyndns.org'.split(' ')
+ANNOUNCE_CHANNEL = '#groestlcoin'
 VERSION_CHECK = lambda v: None if 2130300 <= v else 'Groestlcoin version too old. Upgrade to 2.13.3 or newer!'
 VERSION_WARNING = lambda v: None
 SOFTFORKS_REQUIRED = set(['bip65', 'csv', 'segwit'])
