@@ -18,7 +18,7 @@ RPC_CHECK = defer.inlineCallbacks(lambda bitcoind: defer.returnValue(
 SUBSIDY_FUNC = lambda height: __import__('groestlcoin_subsidy').getBlockBaseValue(0, height+1)
 POW_FUNC = data.hash_groestl
 BLOCK_PERIOD = 60 # s
-SYMBOL = 'GRS'
+SYMBOL = 'TGRS'
 CONF_FILE_FUNC = lambda: os.path.join(os.path.join(os.environ['APPDATA'], 'Groestlcoin') if platform.system() == 'Windows' else os.path.expanduser('~/Library/Application Support/Groestlcoin/') if platform.system() == 'Darwin' else os.path.expanduser('~/.groestlcoin'), 'groestlcoin.conf')
 BLOCK_EXPLORER_URL_PREFIX = 'http://chainz.cryptoid.info/grs-test/block.dws?'
 ADDRESS_EXPLORER_URL_PREFIX = 'http://chainz.cryptoid.info/grs-test/address.dws?'
