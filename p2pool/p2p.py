@@ -186,6 +186,24 @@ class Protocol(p2protocol.Protocol):
         if best_share_hash is not None:
             self.node.handle_share_hashes([best_share_hash], self)
         
+        def add_to_remote_view_of_my_known_txs(added):
+            if added:
+                self.send_have_tx(tx_hashes=list(added.keys()))
+        
+        watch_id0 = self.node.known_txs_var.added.watch(add_to_remote_view_of_my_known_txs)
+        self.connection_lost_event.watch(lambda: self.node.known_txs_var.added.unwatch(watch_id0))
+        
+        def remove_from_remote_view_of_my_known_txs(removed):
+            if removed:
+                self.send_losing_tx(tx_hashes=list(removed.keys()))
+                
+                # cache forgotten txs here for a little while so latency of "losing_tx" packets doesn't cause problems
+                key = max(self.known_txs_cache) + 1 if self.known_txs_cache else 0
+                self.known_txs_cache[key] = removed #dict((h, before[h]) for h in removed)
+                reactor.callLater(20, self.known_txs_cache.pop, key)
+        watch_id1 = self.node.known_txs_var.removed.watch(remove_from_remote_view_of_my_known_txs)
+        self.connection_lost_event.watch(lambda: self.node.known_txs_var.removed.unwatch(watch_id1))
+        
         def update_remote_view_of_my_known_txs(before, after):
             added = set(after) - set(before)
             removed = set(before) - set(after)
@@ -198,8 +216,8 @@ class Protocol(p2protocol.Protocol):
                 key = max(self.known_txs_cache) + 1 if self.known_txs_cache else 0
                 self.known_txs_cache[key] = dict((h, before[h]) for h in removed)
                 reactor.callLater(20, self.known_txs_cache.pop, key)
-        watch_id = self.node.known_txs_var.transitioned.watch(update_remote_view_of_my_known_txs)
-        self.connection_lost_event.watch(lambda: self.node.known_txs_var.transitioned.unwatch(watch_id))
+        watch_id2 = self.node.known_txs_var.transitioned.watch(update_remote_view_of_my_known_txs)
+        self.connection_lost_event.watch(lambda: self.node.known_txs_var.transitioned.unwatch(watch_id2))
         
         self.send_have_tx(tx_hashes=self.node.known_txs_var.value.keys())
         
@@ -420,7 +438,7 @@ class Protocol(p2protocol.Protocol):
             
             self.remembered_txs[tx_hash] = tx
             self.remembered_txs_size += 100 + bitcoin_data.tx_type.packed_size(tx)
-        new_known_txs = dict(self.node.known_txs_var.value)
+        added_known_txs = {}
         warned = False
         for tx in txs:
             tx_hash = bitcoin_data.single_hash256(bitcoin_data.tx_type.pack(tx))
@@ -435,8 +453,8 @@ class Protocol(p2protocol.Protocol):
             
             self.remembered_txs[tx_hash] = tx
             self.remembered_txs_size += 100 + bitcoin_data.tx_type.packed_size(tx)
-            new_known_txs[tx_hash] = tx
-        self.node.known_txs_var.set(new_known_txs)
+            added_known_txs[tx_hash] = tx
+        self.node.known_txs_var.add(added_known_txs)
         if self.remembered_txs_size >= self.max_remembered_txs_size:
             raise PeerMisbehavingError('too much transaction data stored')
     message_forget_tx = pack.ComposedType([
