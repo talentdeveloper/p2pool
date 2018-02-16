@@ -1,9 +1,9 @@
 from p2pool.bitcoin import networks
 
 PARENT = networks.nets['groestlcoin']
-SHARE_PERIOD = 15 # seconds
-CHAIN_LENGTH = 24*60*60//15 # shares
-REAL_CHAIN_LENGTH = 24*60*60//15 # shares
+SHARE_PERIOD = 30 # seconds
+CHAIN_LENGTH = 24*60*60//10 # shares
+REAL_CHAIN_LENGTH = 24*60*60//10 # shares
 TARGET_LOOKBEHIND = 60 # shares
 SPREAD = 30 # blocks
 IDENTIFIER = 'a15320ffb197c089'.decode('hex')
