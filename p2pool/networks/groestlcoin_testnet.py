@@ -1,11 +1,11 @@
 from p2pool.bitcoin import networks
 
 PARENT = networks.nets['groestlcoin_testnet']
-SHARE_PERIOD = 30 # seconds
-CHAIN_LENGTH = 24*60*60//10 # shares
-REAL_CHAIN_LENGTH = 24*60*60//10 # shares
-TARGET_LOOKBEHIND = 60 # shares
-SPREAD = 30 # blocks
+SHARE_PERIOD = 20 # seconds
+CHAIN_LENGTH = 24*60*60//20 # shares
+REAL_CHAIN_LENGTH = 24*60*60//20 # shares
+TARGET_LOOKBEHIND = 20 # shares
+SPREAD = 10 # blocks
 IDENTIFIER = 'a15320ffb197c089'.decode('hex')
 PREFIX = '867c36a56116e81e'.decode('hex')
 P2P_PORT = 21331
