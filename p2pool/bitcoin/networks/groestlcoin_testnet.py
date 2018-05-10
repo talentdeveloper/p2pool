@@ -12,9 +12,8 @@ P2P_PORT = 17777
 ADDRESS_VERSION = 111
 RPC_PORT = 17766
 RPC_CHECK = defer.inlineCallbacks(lambda bitcoind: defer.returnValue(
-            'groestlcoinaddress' in (yield bitcoind.rpc_help()) and
-            (yield bitcoind.rpc_getinfo())['testnet']
-        ))
+            (yield helper.check_genesis_block(bitcoind, 'ffbb50fc9898cdd36ec163e6ba23230164c0052a28876255b7dcf2cd36'))
+            ))
 SUBSIDY_FUNC = lambda height: __import__('groestlcoin_subsidy').getBlockBaseValue(0, height+1)
 POW_FUNC = data.hash_groestl
 BLOCK_PERIOD = 60 # s
