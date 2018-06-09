@@ -10,6 +10,7 @@ from p2pool.util import pack
 P2P_PREFIX = 'f9beb4d4'.decode('hex')
 P2P_PORT = 1331
 ADDRESS_VERSION = 36
+SEGWIT_ADDRESS_VERSION = 5
 RPC_PORT = 1441
 RPC_CHECK = defer.inlineCallbacks(lambda bitcoind: defer.returnValue(
             (yield helper.check_genesis_block(bitcoind, 'ac5927c594d49cc0bdb81759d0da8297eb614683d3acb62f0703b639023'))
@@ -25,3 +26,4 @@ TX_EXPLORER_URL_PREFIX = 'http://chainz.cryptoid.info/grs/tx.dws?'
 SANE_TARGET_RANGE= (2**256//1000000000000000000 - 1, 2**256//100000 - 1)
 DUMB_SCRYPT_DIFF = 256
 DUST_THRESHOLD = 0.001e8
+HUMAN_READABLE_PART = 'grs'
