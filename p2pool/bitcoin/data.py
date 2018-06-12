@@ -7,6 +7,18 @@ import warnings
 import p2pool
 from p2pool.util import math, pack
 
+import groestlcoin_hash
+
+def groestlHash(data):
+    """Groestl hash returning bytes."""
+    return groestlcoin_hash.getHash(data, len(data))
+
+def hash_groestl(data):
+    return pack.IntType(256).unpack(groestlHash(data))
+
+def single_hash256(data):
+    return pack.IntType(256).unpack(hashlib.sha256(data).digest())
+
 def hash256(data):
     return pack.IntType(256).unpack(hashlib.sha256(hashlib.sha256(data).digest()).digest())
 
@@ -16,7 +28,7 @@ def hash160(data):
     return pack.IntType(160).unpack(hashlib.new('ripemd160', hashlib.sha256(data).digest()).digest())
 
 class ChecksummedType(pack.Type):
-    def __init__(self, inner, checksum_func=lambda data: hashlib.sha256(hashlib.sha256(data).digest()).digest()[:4]):
+    def __init__(self, inner, checksum_func=lambda data: groestlHash(data)[:4]):
         self.inner = inner
         self.checksum_func = checksum_func
     
@@ -335,12 +347,12 @@ def get_wtxid(tx, txid=None, txhash=None):
         assert len(tx['tx_ins']) == len(tx['witness'])
         has_witness = any(len(w) > 0 for w in tx['witness'])
     if has_witness:
-        return hash256(tx_type.pack(tx)) if txhash is None else txhash
+        return single_hash256(tx_type.pack(tx)) if txhash is None else txhash
     else:
-        return hash256(tx_id_type.pack(tx)) if txid is None else txid
+        return single_hash256(tx_id_type.pack(tx)) if txid is None else txid
 
 def get_txid(tx):
-    return hash256(tx_id_type.pack(tx))
+    return single_hash256(tx_id_type.pack(tx))
 
 def pubkey_to_script2(pubkey):
     assert len(pubkey) <= 75

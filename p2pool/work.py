@@ -100,10 +100,10 @@ class WorkerBridge(worker_interface.WorkerBridge):
             bb = self.node.best_block_header.value
             if bb is not None and bb['previous_block'] == t['previous_block'] and self.node.net.PARENT.POW_FUNC(bitcoin_data.block_header_type.pack(bb)) <= t['bits'].target:
                 print 'Skipping from block %x to block %x!' % (bb['previous_block'],
-                    bitcoin_data.hash256(bitcoin_data.block_header_type.pack(bb)))
+                    bitcoin_data.hash_groestl(bitcoin_data.block_header_type.pack(bb)))
                 t = dict(
                     version=bb['version'],
-                    previous_block=bitcoin_data.hash256(bitcoin_data.block_header_type.pack(bb)),
+                    previous_block=bitcoin_data.hash_groestl(bitcoin_data.block_header_type.pack(bb)),
                     bits=bb['bits'], # not always true
                     coinbaseflags='',
                     height=t['height'] + 1,
@@ -154,7 +154,7 @@ class WorkerBridge(worker_interface.WorkerBridge):
             return
         self.address_throttle=time.time()
         print "ATTEMPTING TO FRESHEN ADDRESS."
-        self.address = yield deferral.retry('Error getting a dynamic address from bitcoind:', 5)(lambda: self.bitcoind.rpc_getnewaddress('p2pool'))()
+        self.address = yield deferral.retry('Error getting a dynamic address from groestlcoind:', 5)(lambda: self.bitcoind.rpc_getnewaddress('p2pool'))()
         new_pubkey = bitcoin_data.address_to_pubkey_hash(self.address, self.net)
         self.pubkeys.popleft()
         self.pubkeys.addkey(new_pubkey)
@@ -209,7 +209,7 @@ class WorkerBridge(worker_interface.WorkerBridge):
         if (self.node.p2p_node is None or len(self.node.p2p_node.peers) == 0) and self.node.net.PERSIST:
             raise jsonrpc.Error_for_code(-12345)(u'p2pool is not connected to any peers')
         if time.time() > self.current_work.value['last_update'] + 60:
-            raise jsonrpc.Error_for_code(-12345)(u'lost contact with bitcoind')
+            raise jsonrpc.Error_for_code(-12345)(u'lost contact with groestlcoind')
         user, pubkey_hash, desired_share_target, desired_pseudoshare_target = self.get_user_details(user)
         return pubkey_hash, desired_share_target, desired_pseudoshare_target
     
@@ -243,8 +243,6 @@ class WorkerBridge(worker_interface.WorkerBridge):
             raise jsonrpc.Error_for_code(-12345)(u'p2pool is not connected to any peers')
         if self.node.best_share_var.value is None and self.node.net.PERSIST:
             raise jsonrpc.Error_for_code(-12345)(u'p2pool is downloading shares')
-        if set(r[1:] if r.startswith('!') else r for r in self.node.bitcoind_work.value['rules']) - set(getattr(self.node.net, 'SOFTFORKS_REQUIRED', [])):
-            raise jsonrpc.Error_for_code(-12345)(u'unknown rule activated')
         
         if self.merged_work.value:
             tree, size = bitcoin_data.make_auxpow_tree(self.merged_work.value)
@@ -259,8 +257,10 @@ class WorkerBridge(worker_interface.WorkerBridge):
             mm_data = ''
             mm_later = []
         
-        tx_hashes = [bitcoin_data.hash256(bitcoin_data.tx_type.pack(tx)) for tx in self.current_work.value['transactions']]
+        tx_hashes = [bitcoin_data.single_hash256(bitcoin_data.tx_type.pack(tx)) for tx in self.current_work.value['transactions']]
         tx_map = dict(zip(tx_hashes, self.current_work.value['transactions']))
+
+        self.node.mining2_txs_var.set(tx_map) # let node.py know not to evict these transactions
         
         previous_share = self.node.tracker.items[self.node.best_share_var.value] if self.node.best_share_var.value is not None else None
         if previous_share is None:
@@ -392,21 +392,21 @@ class WorkerBridge(worker_interface.WorkerBridge):
                 new_gentx['flag'] = gentx['flag']
                 new_gentx['witness'] = gentx['witness']
             
-            header_hash = bitcoin_data.hash256(bitcoin_data.block_header_type.pack(header))
+            header_hash = bitcoin_data.hash_groestl(bitcoin_data.block_header_type.pack(header))
             pow_hash = self.node.net.PARENT.POW_FUNC(bitcoin_data.block_header_type.pack(header))
             try:
                 if pow_hash <= header['bits'].target or p2pool.DEBUG:
                     helper.submit_block(dict(header=header, txs=[new_gentx] + other_transactions), False, self.node.factory, self.node.bitcoind, self.node.bitcoind_work, self.node.net)
                     if pow_hash <= header['bits'].target:
                         print
-                        print 'GOT BLOCK FROM MINER! Passing to bitcoind! %s%064x' % (self.node.net.PARENT.BLOCK_EXPLORER_URL_PREFIX, header_hash)
+                        print 'GOT BLOCK FROM MINER! Passing to groestlcoind! %s%064x' % (self.node.net.PARENT.BLOCK_EXPLORER_URL_PREFIX, header_hash)
                         print
             except:
                 log.err(None, 'Error while processing potential block:')
             
             user, _, _, _ = self.get_user_details(user)
             assert header['previous_block'] == ba['previous_block']
-            assert header['merkle_root'] == bitcoin_data.check_merkle_link(bitcoin_data.hash256(new_packed_gentx), merkle_link)
+            assert header['merkle_root'] == bitcoin_data.check_merkle_link(bitcoin_data.single_hash256(new_packed_gentx), merkle_link)
             assert header['bits'] == ba['bits']
             
             on_time = self.new_work_event.times == lp_count
@@ -449,6 +449,17 @@ class WorkerBridge(worker_interface.WorkerBridge):
                     time.time() - getwork_time,
                     ' DEAD ON ARRIVAL' if not on_time else '',
                 )
+
+                # node.py will sometimes forget transactions if bitcoind's work has changed since this stratum
+                # job was assigned. Fortunately, the tx_map is still in in our scope from this job, so we can use that
+                # to refill it if needed.
+
+                known_txs = self.node.known_txs_var.value
+                missing = {hsh:val for (hsh, val) in tx_map.iteritems() if not hsh in known_txs}
+                if missing:
+                    print "Warning: %i transactions were erroneously evicted from known_txs_var. Refilling now." % len(missing)
+                    self.node.known_txs_var.add(missing)
+
                 self.my_share_hashes.add(share.hash)
                 if not on_time:
                     self.my_doa_share_hashes.add(share.hash)

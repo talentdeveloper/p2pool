@@ -37,7 +37,7 @@ def check_hash_link(hash_link, data, const_ending=''):
     assert len(hash_link['extra_data']) == max(0, extra_length - len(const_ending))
     extra = (hash_link['extra_data'] + const_ending)[len(hash_link['extra_data']) + len(const_ending) - extra_length:]
     assert len(extra) == extra_length
-    return pack.IntType(256).unpack(hashlib.sha256(sha256.sha256(data, (hash_link['state'], extra, 8*hash_link['length'])).digest()).digest())
+    return pack.IntType(256).unpack(sha256.sha256(data, (hash_link['state'], extra, 8*hash_link['length'])).digest())
 
 # shares
 
@@ -63,7 +63,7 @@ def is_segwit_activated(version, net):
     segwit_activation_version = getattr(net, 'SEGWIT_ACTIVATION_VERSION', 0)
     return version >= segwit_activation_version and segwit_activation_version > 0
 
-DONATION_SCRIPT = '4104ffd03de44a6e11b9917f3a29f9443283d9871c9d743ef30d5eddcd37094b64d1b3d8090496b53256786bf5c82932ec23c3b74d9f05a6f95a8b5529352656664bac'.decode('hex')
+DONATION_SCRIPT = '4104c5e6c406b804c7ea1f7c756297ed327dd12f6466b699536bbb85641d9daf9a1222a5a6e18bd203b96132371c7932cb4c999fc7039171a28d76695c5c055f2f33ac'.decode('hex')
 
 class BaseShare(object):
     VERSION = 0
@@ -71,7 +71,7 @@ class BaseShare(object):
     SUCCESSOR = None
 
     MAX_BLOCK_WEIGHT = 4000000
-    MAX_NEW_TXS_SIZE = 50000
+    MAX_NEW_TXS_SIZE = 100000
 
     small_block_header_type = pack.ComposedType([
         ('version', pack.VarIntType()),
@@ -323,7 +323,7 @@ class BaseShare(object):
         merkle_root = bitcoin_data.check_merkle_link(self.gentx_hash, self.share_info['segwit_data']['txid_merkle_link'] if segwit_activated else self.merkle_link)
         self.header = dict(self.min_header, merkle_root=merkle_root)
         self.pow_hash = net.PARENT.POW_FUNC(bitcoin_data.block_header_type.pack(self.header))
-        self.hash = self.header_hash = bitcoin_data.hash256(bitcoin_data.block_header_type.pack(self.header))
+        self.hash = self.header_hash = bitcoin_data.hash_groestl(bitcoin_data.block_header_type.pack(self.header))
         
         if self.target > net.MAX_TARGET:
             from p2pool import p2p
@@ -366,7 +366,7 @@ class BaseShare(object):
                 raise p2p.PeerMisbehavingError('switch without enough history')
         
         other_tx_hashes = [tracker.items[tracker.get_nth_parent_hash(self.hash, share_count)].share_info['new_transaction_hashes'][tx_count] for share_count, tx_count in self.iter_transaction_hash_refs()]
-        if other_txs is not None and not isinstance(other_txs, dict): other_txs = dict((bitcoin_data.hash256(bitcoin_data.tx_type.pack(tx)), tx) for tx in other_txs)
+        if other_txs is not None and not isinstance(other_txs, dict): other_txs = dict((bitcoin_data.single_hash256(bitcoin_data.tx_type.pack(tx)), tx) for tx in other_txs)
         
         share_info, gentx, other_tx_hashes2, get_share = self.generate_transaction(tracker, self.share_info['share_data'], self.header['bits'].target, self.share_info['timestamp'], self.share_info['bits'].target, self.contents['ref_merkle_link'], [(h, None) for h in other_tx_hashes], self.net,
             known_txs=other_txs, last_txout_nonce=self.contents['last_txout_nonce'], segwit_data=self.share_info.get('segwit_data', None))
@@ -402,9 +402,6 @@ class BaseShare(object):
         return [known_txs[tx_hash] for tx_hash in other_tx_hashes]
     
     def should_punish_reason(self, previous_block, bits, tracker, known_txs):
-        if (self.header['previous_block'], self.header['bits']) != (previous_block, bits) and self.header_hash != previous_block and self.peer_addr is not None:
-            return True, 'Block-stale detected! height(%x) < height(%x) or %08x != %08x' % (self.header['previous_block'], previous_block, self.header['bits'].bits, bits.bits)
-        
         if self.pow_hash <= self.header['bits'].target:
             return -1, 'block solution'
         
@@ -433,11 +430,10 @@ class NewShare(BaseShare):
     VERSION = 17
     VOTING_VERSION = 17
     SUCCESSOR = None
-    MAX_NEW_TXS_SIZE = 100000
 
 class Share(BaseShare):
-    VERSION = 16
-    VOTING_VERSION = 16
+    VERSION = 17
+    VOTING_VERSION = 17
     SUCCESSOR = NewShare
 
 
@@ -697,7 +693,7 @@ def get_warnings(tracker, best_share, net, bitcoind_getinfo, bitcoind_work_value
         res.append(version_warning)
     
     if time.time() > bitcoind_work_value['last_update'] + 60:
-        res.append('''LOST CONTACT WITH BITCOIND for %s! Check that it isn't frozen or dead!''' % (math.format_dt(time.time() - bitcoind_work_value['last_update']),))
+        res.append('''LOST CONTACT WITH GROESTLCOIND for %s! Check that it isn't frozen or dead!''' % (math.format_dt(time.time() - bitcoind_work_value['last_update']),))
     
     return res
 
