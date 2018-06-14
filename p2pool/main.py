@@ -288,14 +288,7 @@ def main(args, net, datadir_path, merged_urls, worker_endpoint):
         
         print 'Listening for workers on %r port %i...' % (worker_endpoint[0], worker_endpoint[1])
         
-        #wb = work.WorkerBridge(node, my_pubkey_hash, args.donation_percentage, merged_urls, args.worker_fee, args, pubkeys, bitcoind)
-        if args.address_share_rate is not None:
-            share_rate_type = 'address'
-            share_rate = args.address_share_rate
-        else:
-            share_rate_type = 'miner'
-            share_rate = args.miner_share_rate
-        wb = work.WorkerBridge(node, my_pubkey_hash, my_pubkey_hash_version, args.donation_percentage, merged_urls, args.worker_fee, args, pubkeys, bitcoind, args.min_difficulty, share_rate, share_rate_type)
+        wb = work.WorkerBridge(node, my_pubkey_hash, my_pubkey_hash_version, args.donation_percentage, merged_urls, args.worker_fee, args, pubkeys, bitcoind)
         web_root = web.get_web_root(wb, datadir_path, bitcoind_getinfo_var, static_dir=args.web_static)
         caching_wb = worker_interface.CachingWorkerBridge(wb)
         worker_interface.WorkerInterface(caching_wb).attach_to(web_root, get_handler=lambda request: request.redirect('/static/'))

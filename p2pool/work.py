@@ -20,7 +20,7 @@ print_throttle = 0.0
 class WorkerBridge(worker_interface.WorkerBridge):
     COINBASE_NONCE_LENGTH = 8
     
-    def __init__(self, node, my_pubkey_hash, my_pubkey_hash_version, donation_percentage, merged_urls, worker_fee, args, pubkeys, bitcoind, min_difficulty, share_rate, share_rate_type):
+    def __init__(self, node, my_pubkey_hash, my_pubkey_hash_version, donation_percentage, merged_urls, worker_fee, args, pubkeys, bitcoind):
         worker_interface.WorkerBridge.__init__(self)
         self.recent_shares_ts_work = []
         
