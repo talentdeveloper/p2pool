@@ -306,14 +306,21 @@ class WorkerBridge(worker_interface.WorkerBridge):
                     )
         
         if True:
+            coinbase_script = (script.create_push_script([
+                        self.current_work.value['height'],
+                        ] + ([mm_data] if mm_data else []) + [
+                    ]) + self.current_work.value['coinbaseflags'])[:100];
+            # if blocks height is less than or equal to 16 bytes, it's pushed by 1 byte command. (OP_0-OP_16)
+            # scriptSig (unlocking script) cannot be less than 2 bytes, so add a NOP command
+            if len(coinbase_script) == 1:
+                OP_NOP = '\x61'
+                coinbase_script += OP_NOP
+
             share_info, gentx, other_transaction_hashes, get_share = share_type.generate_transaction(
                 tracker=self.node.tracker,
                 share_data=dict(
                     previous_share_hash=self.node.best_share_var.value,
-                    coinbase=(script.create_push_script([
-                        self.current_work.value['height'],
-                        ] + ([mm_data] if mm_data else []) + [
-                    ]) + self.current_work.value['coinbaseflags'])[:100],
+                    coinbase=coinbase_script,
                     nonce=random.randrange(2**32),
                     pubkey_hash=pubkey_hash,
                     pubkey_hash_version=pubkey_hash_version,
