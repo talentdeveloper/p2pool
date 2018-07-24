@@ -19,7 +19,7 @@ SUBSIDY_FUNC = lambda height: __import__('groestlcoin_subsidy').getBlockBaseValu
 POW_FUNC = data.hash_groestl
 BLOCK_PERIOD = 60 # s
 SYMBOL = 'GRS'
-CONF_FILE_FUNC = lambda: os.path.join(os.path.join(os.environ['APPDATA'], 'Groestlcoin') if platform.system() == 'Windows' else os.path.expanduser('~/Library/Application Support/Groestlcoin/') if platform.system() == 'Darwin' else os.path.expanduser('~/.groestlcoin'), 'groestlcoin.conf')
+CONF_FILE_FUNC = lambda: os.path.join(os.path.join(os.environ['APPDATA'], 'Soferox') if platform.system() == 'Windows' else os.path.expanduser('~/Library/Application Support/Soferox/') if platform.system() == 'Darwin' else os.path.expanduser('~/.soferox'), 'soferox.conf')
 BLOCK_EXPLORER_URL_PREFIX = 'http://chainz.cryptoid.info/grs/block.dws?'
 ADDRESS_EXPLORER_URL_PREFIX = 'http://chainz.cryptoid.info/grs/address.dws?'
 TX_EXPLORER_URL_PREFIX = 'http://chainz.cryptoid.info/grs/tx.dws?'

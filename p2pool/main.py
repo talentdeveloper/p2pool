@@ -529,16 +529,16 @@ def run():
         help='connect to this address (default: 127.0.0.1)',
         type=str, action='store', default='127.0.0.1', dest='bitcoind_address')
     bitcoind_group.add_argument('--groestlcoind-rpc-port', metavar='GROESTLCOIND_RPC_PORT',
-        help='''connect to JSON-RPC interface at this port (default: %s <read from groestlcoin.conf if password not provided>)''' % ', '.join('%s:%i' % (name, net.PARENT.RPC_PORT) for name, net in sorted(realnets.items())),
+        help='''connect to JSON-RPC interface at this port (default: %s <read from soferox.conf if password not provided>)''' % ', '.join('%s:%i' % (name, net.PARENT.RPC_PORT) for name, net in sorted(realnets.items())),
         type=int, action='store', default=None, dest='bitcoind_rpc_port')
     bitcoind_group.add_argument('--groestlcoind-rpc-ssl',
         help='connect to JSON-RPC interface using SSL',
         action='store_true', default=False, dest='bitcoind_rpc_ssl')
     bitcoind_group.add_argument('--groestlcoind-p2p-port', metavar='GROESTLCOIND_P2P_PORT',
-        help='''connect to P2P interface at this port (default: %s <read from groestlcoin.conf if password not provided>)''' % ', '.join('%s:%i' % (name, net.PARENT.P2P_PORT) for name, net in sorted(realnets.items())),
+        help='''connect to P2P interface at this port (default: %s <read from soferox.conf if password not provided>)''' % ', '.join('%s:%i' % (name, net.PARENT.P2P_PORT) for name, net in sorted(realnets.items())),
         type=int, action='store', default=None, dest='bitcoind_p2p_port')
     bitcoind_group.add_argument(metavar='GROESTLCOIND_RPCUSERPASS',
-        help='groestlcoind RPC interface username, then password, space-separated (only one being provided will cause the username to default to being empty, and none will cause P2Pool to read them from groestlcoin.conf)',
+        help='groestlcoind RPC interface username, then password, space-separated (only one being provided will cause the username to default to being empty, and none will cause P2Pool to read them from soferox.conf)',
         type=str, action='store', default=[], nargs='*', dest='bitcoind_rpc_userpass')
     
     args = parser.parse_args()
