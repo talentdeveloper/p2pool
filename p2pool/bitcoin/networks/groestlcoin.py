@@ -18,7 +18,7 @@ RPC_CHECK = defer.inlineCallbacks(lambda bitcoind: defer.returnValue(
 SUBSIDY_FUNC = lambda height: __import__('groestlcoin_subsidy').getBlockBaseValue(0, height+1)
 POW_FUNC = data.hash_groestl
 BLOCK_PERIOD = 60 # s
-SYMBOL = 'GRS'
+SYMBOL = 'SFX'
 CONF_FILE_FUNC = lambda: os.path.join(os.path.join(os.environ['APPDATA'], 'Soferox') if platform.system() == 'Windows' else os.path.expanduser('~/Library/Application Support/Soferox/') if platform.system() == 'Darwin' else os.path.expanduser('~/.soferox'), 'soferox.conf')
 BLOCK_EXPLORER_URL_PREFIX = 'http://chainz.cryptoid.info/grs/block.dws?'
 ADDRESS_EXPLORER_URL_PREFIX = 'http://chainz.cryptoid.info/grs/address.dws?'
@@ -26,4 +26,4 @@ TX_EXPLORER_URL_PREFIX = 'http://chainz.cryptoid.info/grs/tx.dws?'
 SANE_TARGET_RANGE= (2**256//1000000000000000000 - 1, 2**256//100000 - 1)
 DUMB_SCRYPT_DIFF = 256
 DUST_THRESHOLD = 0.001e8
-HUMAN_READABLE_PART = 'grs'
+HUMAN_READABLE_PART = 'sfx'
