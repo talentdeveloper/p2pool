@@ -10,7 +10,7 @@ from p2pool.util import pack
 P2P_PREFIX = 'f9beb4d4'.decode('hex')
 P2P_PORT = 5332
 ADDRESS_VERSION = 63 # must match to PUBKEY_ADDRESS
-SEGWIT_ADDRESS_VERSION = 63 # must match to SCRIPT_ADDRESS
+SEGWIT_ADDRESS_VERSION = 125 # must match to SCRIPT_ADDRESS
 RPC_PORT = 5442
 RPC_CHECK = defer.inlineCallbacks(lambda bitcoind: defer.returnValue(
             (yield helper.check_genesis_block(bitcoind, 'cb4df2fa9b4d6bc09d9502ed67f23397fcd4064512695c8a752f85d3f5f'))
